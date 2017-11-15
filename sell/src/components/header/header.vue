@@ -73,13 +73,15 @@
     name: 'header',
     data () {
       return {
-        detailShow: false
+        detailShow: false   // 浮层是否显示
       };
     },
     methods: {
+      // 显示浮层
       showDetail () {
         this.detailShow = true;
       },
+      // 隐藏浮层
       hiddenDetail () {
         this.detailShow = false;
       }
@@ -90,9 +92,11 @@
       }
     },
     components: {
+      // 星星组件
       'star': star
     },
     created () {
+      // 根据服务器返回图片的type 来决定用哪一个类样式
       this.classMap = ['decrease', 'discount', 'special', 'invoice', 'guarantee'];
     }
   };

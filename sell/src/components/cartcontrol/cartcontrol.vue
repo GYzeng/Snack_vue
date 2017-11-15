@@ -26,17 +26,22 @@
 
     },
     methods: {
+      // 增加一件商品
       addCart (event) {
+        // event._constructed 主要针对pc
         if (!event._constructed) {
           return;
         }
         if (!this.food.count) {
+          // 给 food这个对象 挂载一个叫count的属性 赋值1 并对这个属性进行监听
           Vue.set(this.food, 'count', 1);
         } else {
           this.food.count++;
         }
+        // 调用 绑定的的父组件事件 并把当前点击元素的dom传递
         this.$emit('cartAdd', event.target);
       },
+      // 减少一件商品
       decreaseCart (event) {
         if (!event._constructed) {
           return;

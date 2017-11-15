@@ -5,36 +5,45 @@
 </template>
 
 <script type="text/ecmascript-6">
-  const LENGHT = 5;
-  const CLS_ON = 'on';
-  const CLS_HALF = 'half';
-  const CLS_OFF = 'off';
+  const LENGHT = 5;          // 星星的数量
+  const CLS_ON = 'on';       // 对应满星图片
+  const CLS_HALF = 'half';   // 半星图片
+  const CLS_OFF = 'off';     // 没星图片
   export default {
     name: 'star',
     props: {
+      // 星星大小
       size: {
         type: Number
       },
+      // 传递过来的分数
       score: {
         type: Number
       }
     },
     computed: {
+      // 决定星星大小的计算属性
       starType () {
         return 'star-' + this.size;
       },
       intemClasses () {
         console.log(this.score);
         let result = [];
+        // * 2 向下取整 / 2 为了保证数字不是整数就是.5
         let score = Math.floor(this.score * 2) / 2;
+        // 判断是否有小数
         let hasDecimal = score % 1 !== 0;
+        // 获取整分
         let integer = Math.floor(score);
+        // 先遍历整分 放入对应的整星
         for (var i = 0; i < integer; i++) {
           result.push(CLS_ON);
         }
+        // 放入半星
         if (hasDecimal) {
           result.push(CLS_HALF);
         }
+        // 如果 当前星星不满最高数,继续放入空星
         while (result.length < LENGHT) {
           result.push(CLS_OFF);
         }

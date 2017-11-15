@@ -38,14 +38,18 @@
         </li>
       </ul>
     </div>
-    <shopcart ref="shopcart" :select-foods="selectFoods" :delivery-price="seller.deliveryPrice" :min-price="seller.minPrice"></shopcart>
+    <shopcart ref="shopcart" :select-foods="selectFoods" :delivery-price="seller.deliveryPrice"
+              :min-price="seller.minPrice"></shopcart>
   </div>
 
 </template>
 
 <script type="text/ecmascript-6">
+  // better-scoll 滚动插件
   import BSscroll from 'better-scroll';
+  // 购物车组件
   import shopcart from '../shopcart/shopcart.vue';
+  // 增加删除商品的组件
   import cartcontrol from '../cartcontrol/cartcontrol.vue';
   const ERR_OK = 0;
   export default {
@@ -53,7 +57,9 @@
     data () {
       return {
         goods: [],
+        // 关联2个滚动条高度的数组(记录的是右侧的)
         listHeight: [],
+        // 当前的y值
         scrollY: 0
       };
     },
@@ -63,19 +69,28 @@
       }
     },
     computed: {
+      // 根据右侧栏的滚动 来变动当前选中左侧栏的index
       currentIndex () {
         for (var i = 0; i < this.listHeight.length; i++) {
           let height1 = this.listHeight[i];
           let height2 = this.listHeight[i + 1];
+          /*
+            计算规则 当!height2 为真时,代表取值为空 当前i就在最后一个值了,
+            而如果当前y点大于第一个值,并小于第二个值的时候证明当前滚动单在当前右侧子栏的位置
+            直接返回对应的i
+          */
           if (!height2 || (this.scrollY >= height1 && this.scrollY < height2)) {
             return i;
           }
         }
       },
+      // 给子组件传递的计算属性,主要是哪个商品选中了,选中了多少
       selectFoods () {
         let foods = [];
         this.goods.forEach((good) => {
+          // 获取商品
           good.foods.forEach((food) => {
+            // 如果这个商品有 count 属性并不等于0,就添加进数组
             if (food.count) {
               foods.push(food);
             }
@@ -85,12 +100,15 @@
       }
     },
     created () {
+      // 对应的图标样式数组
       this.classMap = ['decrease', 'discount', 'special', 'invoice', 'guarantee'];
       this.$http.get('/api/goods').then((response) => {
         let body = response.body;
         if (body.errno === ERR_OK) {
           this.goods = body.data;
+          console.log(this.goods);
           this.$nextTick(() => {
+            // 初始化scroll组件
             this._initScroll();
             this._calculateHeight();
           });
@@ -105,44 +123,60 @@
       'cartcontrol': cartcontrol
     },
     methods: {
-     cartAdd (target) {
-       this.$nextTick(() => {
-         this.$refs.shopcart.drop(target);
-       });
-     },
-     selectMenu (index, event) {
-       if (!event._constructed) {
-         return;
-       }
-       let foodList = document.getElementsByClassName('food-list-hook');
-       let el = foodList[index];
-       // 第一个参数是滚动的Y点,第二个是动画执行的时间
-       this.foodScroll.scrollToElement(el, 300);
-     },
-     _initScroll () {
-       var meun = document.getElementsByClassName('menu-wrapper')[0];
-       var foods = document.getElementsByClassName('foods-wrapper')[0];
+      // 当添加一件购物车商品时触发,主要对应绑定在子组件上
+      cartAdd (target) {
+        // 这样写为了是性能优化 不会一次性渲染太多动画
+        this.$nextTick(() => {
+          // 让shopcart组件执行函数
+          this.$refs.shopcart.drop(target);
+        });
+      },
+      // 左侧滑动栏按钮点击事件
+      selectMenu (index, event) {
+        if (!event._constructed) {
+          return;
+        }
+        // 获取全部的子列表
+        let foodList = document.getElementsByClassName('food-list-hook');
+        // 拿到对应的dom
+        let el = foodList[index];
+        // 第一个参数是滚动的Y点,第二个是动画执行的时间
+        this.foodScroll.scrollToElement(el, 300);
+      },
+      // 初始化scroll
+      _initScroll () {
+        // 拿到左右列表
+        var meun = document.getElementsByClassName('menu-wrapper')[0];
+        var foods = document.getElementsByClassName('foods-wrapper')[0];
         this.meunScroll = new BSscroll(meun, {
           click: true
         });
         this.foodScroll = new BSscroll(foods, {
+          // 1 滚动的时候会派发scroll事件，会截流。
+          // 2滚动的时候实时派发scroll事件，不会截流。
+          // 3除了实时派发scroll事件，在swipe的情况下仍然能实时派发scroll事件
           probeType: 3,
           click: true
         });
+        // 监听滚动
         this.foodScroll.on('scroll', (pos) => {
+          // 取整加绝对值,放入监听的当前y值中
           this.scrollY = Math.abs(Math.round(pos.y));
         });
       },
+      // 初始化右侧栏的子栏高度数组
       _calculateHeight () {
+        // 获取全部子栏dom
         let foodList = document.getElementsByClassName('food-list-hook');
+        // 高度初始化宾亮
         let height = 0;
         this.listHeight.push(height);
         for (var i = 0; i < foodList.length; i++) {
+          // 将子组件dom依次取出 获取高度 累加 放入高度数组中
           let item = foodList[i];
           height += item.clientHeight;
           this.listHeight.push(height);
         }
-        console.log(this.listHeight);
       }
     }
   };
@@ -173,16 +207,19 @@
     width: 56px;
     line-height: 14px;
   }
-  .goods .menu-wrapper .menu-item.current{
+
+  .goods .menu-wrapper .menu-item.current {
     position: relative;
     z-index: 10;
     margin-top: -1px;
     background-color: #fff;
     font-weight: 700;
   }
-  .goods .menu-wrapper .menu-item.current{
+
+  .goods .menu-wrapper .menu-item.current {
 
   }
+
   .goods .menu-wrapper .menu-item .icon {
     display: inline-block;
     vertical-align: top;
@@ -218,7 +255,7 @@
     width: 50px;
     vertical-align: middle;
     font-size: 12px;
-    border-1px(rgba(7, 17, 27, 0.1));
+  border-1px(rgba(7, 17, 27, 0.1));
   }
 
   .goods .foods-wrapper {
@@ -296,6 +333,7 @@
     font-size: 10px;
     color: rgb(147, 153, 159);
   }
+
   .goods .foods-wrapper .food-item .content .cartcontrol-wrapper {
     position: absolute;
     right: 0;

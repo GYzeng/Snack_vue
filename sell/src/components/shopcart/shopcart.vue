@@ -1,6 +1,6 @@
 <template>
   <div class="shopcart">
-    <div class="content">
+    <div class="content" @click="toggleList">
       <div class="conten-left">
         <div class="logo-wrapper">
           <div class="logo" :class="{'highlight':totalCount}">
@@ -19,21 +19,42 @@
     </div>
     <div class="ball-container">
       <transition-group  v-on:before-enter="beforeEnter"
-                  v-on:enter="enter"
-                  v-on:after-enter="afterEnter" name="drop">
+                         v-on:enter="enter"
+                         v-on:after-enter="afterEnter" name="drop">
         <div v-for="(ball, index) in balls" :key="index"  v-show="ball.show" class="ball">
           <div class="inner"></div>
         </div>
       </transition-group>
     </div>
+    <div class="shopcart-list" v-show="listShow">
+      <div class="list-header">
+        <h1 class="title">购物车</h1>
+        <span class="empty">清空</span>
+      </div>
+      <div class="list-content">
+        <ul>
+          <li class="food" v-for="food in selectFoods">
+            <span class="name">{{food.name}}</span>
+            <div class="price">
+              <span>${{food.price*food.count}}</span>
+            </div>
+            <div class="cartontrol-wrapper">
+              <cartcontrol :food="food"></cartcontrol>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
   </div>
 </template>
 
 <script type="text/ecmascript-6">
+  import cartcontrol from '../cartcontrol/cartcontrol.vue';
   export default {
     name: 'shopcart',
     data () {
       return {
+        // 小球数组
         balls: [
           {
             show: false
@@ -51,28 +72,33 @@
             show: false
           }
         ],
-        dropBalls: []
+        // 点击的小球数组
+        dropBalls: [],
+        fold: true
       };
     },
     props: {
+      // 选中的商品
       selectFoods: {
         type: Array,
         default () {
           return [];
         }
       },
+      // 配送费
       deliveryPrice: {
         type: Number,
         default: 0
       },
+      // 还差多少钱配送
       minPrice: {
         type: Number,
         default: 0
       }
     },
     methods: {
+      // 小球动画开始,这个方法主要由,父组件调用
       drop (el) {
-        console.log(el);
         for (var i = 0; i < this.balls.length; i++) {
           let ball = this.balls[i];
           if (!ball.show) {
@@ -83,22 +109,21 @@
           }
         }
       },
+      // 设置动画的初始状态,钩子动画函数
       beforeEnter: function (el) {
-        // ...
-
+        // 获取小球总数
         let count = this.balls.length;
-        console.log(this.balls);
+        // 循环 每个小球,如果show属性为true开始执行
         while (count--) {
           let ball = this.balls[count];
           if (ball.show) {
+            // 获取点击元素的起始布局,并计算出位置,设置transform
             let rect = ball.el.getBoundingClientRect();
             let x = rect.left - 32;
             let y = -(window.innerHeight - rect.top - 22);
             el.style.webkitTransform = `translate3d(0,${y}px,0)`;
             el.style.transform = `translate3d(0,${y}px,0)`;
-            console.log(el);
             let inner = el.getElementsByClassName('inner')[0];
-            console.log(inner);
             inner.style.webkitTransform = `translate3d(${x}px, 0, 0)`;
             inner.style.transform = `translate3d(${x}px, 0, 0)`;
           }
@@ -123,16 +148,24 @@
           inner.style.transform = 'translate3d(0, 0, 0)';
         });
       },
+      // 动画结束
       afterEnter: function (el) {
-        // ...
+        // 动画执行完毕将第一个小球删除 并给删除的小球改变状态
         let ball = this.dropBalls.shift();
         if (ball) {
           ball.show = false;
 //          el.style.display = 'none';
         }
+      },
+      toggleList () {
+        if (!this.totalCount) {
+          return;
+        }
+        this.fold = !this.fold;
       }
     },
     computed: {
+      // 计算金额,所有选中的商品数量*单价累加
       totalPrice () {
         let total = 0;
         this.selectFoods.forEach((food) => {
@@ -140,6 +173,7 @@
         });
         return total;
       },
+      // 获取选择商品个数
       totalCount () {
         let count = 0;
         this.selectFoods.forEach((food) => {
@@ -147,7 +181,9 @@
         });
         return count;
       },
+      // 结算文本的动态改变
       payDesc () {
+        // 总价格为0,默认最低配送价格,不到配送价格显示差价,满额显示结算
         if (this.totalPrice === 0) {
           return '$' + `${this.minPrice}元起送`;
         } else if (this.totalPrice < this.minPrice) {
@@ -157,13 +193,25 @@
           return '去结算';
         }
       },
+      // 结算文本样式
       payClass () {
         if (this.totalPrice < this.minPrice) {
           return 'not-enough';
         } else {
           return 'enough';
         }
+      },
+      listShow () {
+        if (!this.totalCount) {
+          this.fold = true;
+          return false;
+        }
+        let show = !this.fold;
+        return show;
       }
+    },
+    components: {
+      'cartcontrol': cartcontrol
     }
   };
 </script>

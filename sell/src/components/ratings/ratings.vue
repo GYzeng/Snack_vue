@@ -1,5 +1,5 @@
 <template>
-  <div>我是ratings</div>
+  <div>我是ratings {{ 3.5 % 1 }}</div>
 </template>
 
 <script type="text/ecmascript-6">

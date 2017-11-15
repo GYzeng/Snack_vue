@@ -18,6 +18,7 @@
 
 <script type="text/ecmascript-6">
   import header from './components/header/header.vue';
+  // 后台状态码
   const ERR_OK = 0;
   export default {
     name: 'app',
@@ -28,6 +29,7 @@
       };
     },
     components: {
+      // 头部组件
       'v-header': header
     },
     created () {
