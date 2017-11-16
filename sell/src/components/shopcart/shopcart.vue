@@ -1,54 +1,65 @@
 <template>
-  <div class="shopcart">
-    <div class="content" @click="toggleList">
-      <div class="conten-left">
-        <div class="logo-wrapper">
-          <div class="logo" :class="{'highlight':totalCount}">
-            <i class="icon-shopping_cart" :class="{'highlight':totalCount}"></i>
+  <div class="shopcart-wrapper">
+    <div class="shopcart">
+      <div class="content" @click="toggleList">
+        <div class="conten-left">
+          <div class="logo-wrapper">
+            <div class="logo" :class="{'highlight':totalCount}">
+              <i class="icon-shopping_cart" :class="{'highlight':totalCount}"></i>
+            </div>
+            <div class="num" v-show="totalCount>0">{{totalCount}}</div>
           </div>
-          <div class="num" v-show="totalCount>0">{{totalCount}}</div>
+          <div class="price" :class="{'highlight':totalCount}">${{totalPrice}}</div>
+          <div class="desc">另需配送费${{deliveryPrice}}</div>
         </div>
-        <div class="price" :class="{'highlight':totalCount}">${{totalPrice}}</div>
-        <div class="desc">另需配送费${{deliveryPrice}}</div>
-      </div>
-      <div class="conten-right">
-        <div class="pay" :class="payClass">
-          {{ payDesc }}
+        <div class="conten-right" @click.stop.prevent="pay">
+          <div class="pay" :class="payClass">
+            {{ payDesc }}
+          </div>
         </div>
       </div>
-    </div>
-    <div class="ball-container">
-      <transition-group  v-on:before-enter="beforeEnter"
-                         v-on:enter="enter"
-                         v-on:after-enter="afterEnter" name="drop">
-        <div v-for="(ball, index) in balls" :key="index"  v-show="ball.show" class="ball">
-          <div class="inner"></div>
+      <div class="ball-container">
+        <transition-group v-on:before-enter="beforeEnter"
+                          v-on:enter="enter"
+                          v-on:after-enter="afterEnter" name="drop">
+          <div v-for="(ball, index) in balls" :key="index" v-show="ball.show" class="ball">
+            <div class="inner"></div>
+          </div>
+        </transition-group>
+      </div>
+      <transition name="fold">
+        <div class="shopcart-list" v-show="listShow">
+          <div class="list-header">
+            <h1 class="title">购物车</h1>
+            <span class="empty" @click="empty">清空</span>
+          </div>
+          <div class="list-content" ref="listContent">
+            <ul>
+              <li class="food" v-for="food in selectFoods">
+                <span class="name">{{food.name}}</span>
+                <div class="price">
+                  <span>${{food.price*food.count}}</span>
+                </div>
+                <div class="cartontrol-wrapper">
+                  <cartcontrol :food="food"></cartcontrol>
+                </div>
+              </li>
+            </ul>
+          </div>
         </div>
-      </transition-group>
+      </transition>
+
     </div>
-    <div class="shopcart-list" v-show="listShow">
-      <div class="list-header">
-        <h1 class="title">购物车</h1>
-        <span class="empty">清空</span>
-      </div>
-      <div class="list-content">
-        <ul>
-          <li class="food" v-for="food in selectFoods">
-            <span class="name">{{food.name}}</span>
-            <div class="price">
-              <span>${{food.price*food.count}}</span>
-            </div>
-            <div class="cartontrol-wrapper">
-              <cartcontrol :food="food"></cartcontrol>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </div>
+    <transition name="fade">
+      <div class="list-mask" @click="hiddenList" v-show="listShow"></div>
+    </transition>
   </div>
+
 </template>
 
 <script type="text/ecmascript-6">
+  // better-scoll 滚动插件
+  import BSscroll from 'better-scroll';
   import cartcontrol from '../cartcontrol/cartcontrol.vue';
   export default {
     name: 'shopcart',
@@ -157,11 +168,28 @@
 //          el.style.display = 'none';
         }
       },
+      // 点击购物车
       toggleList () {
         if (!this.totalCount) {
           return;
         }
         this.fold = !this.fold;
+      },
+      empty () {
+        this.selectFoods.forEach((food) => {
+          food.count = 0;
+        });
+      },
+      // 隐藏列表
+      hiddenList () {
+        this.fold = true;
+      },
+      // 支付
+      pay () {
+        if (this.totalPrice < this.minPrice) {
+          return;
+        }
+        window.alert(this.totalPrice);
       }
     },
     computed: {
@@ -201,12 +229,29 @@
           return 'enough';
         }
       },
+      // 计算属性,列表是否隐藏
       listShow () {
         if (!this.totalCount) {
           this.fold = true;
           return false;
         }
         let show = !this.fold;
+
+        if (show) {
+          this.$nextTick(() => {
+            // 拿到左右列表
+            console.log(this.$refs);
+            // 如果已经实例化过 只刷新就好
+            if (!this.scroll) {
+              var listContent = this.$refs.listContent;
+              this.scroll = new BSscroll(listContent, {
+                click: true
+              });
+            } else {
+              this.scroll.refresh();
+            }
+          });
+        }
         return show;
       }
     },
@@ -217,6 +262,8 @@
 </script>
 
 <style lang="stylus" rel="stylesheet/stylus">
+  @import "../../common/stylus/mixin.styl";
+
   .shopcart {
     position: fixed;
     left: 0;
@@ -339,13 +386,15 @@
   .shopcart .ball-container {
     /*transition: all .6s cubic-bezier(0.11, 0.92, 0.98, 0.75);*/
   }
+
   .shopcart .ball-container .ball {
     position: fixed;
     left: 32px;
     bottom: 22px;
     z-index: 200;
-    transition: all 0.2s cubic-bezier(0.49,-0.29,0.75,0.41);
+    transition: all 0.2s cubic-bezier(0.49, -0.29, 0.75, 0.41);
   }
+
   .shopcart .ball-container .ball .inner {
     width: 16px;
     height: 16px;
@@ -354,4 +403,102 @@
     transition: all 0.2s linear;
   }
 
+  .shopcart .shopcart-list {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: -1;
+    width: 100%;
+    transition: all 0.5s;
+    transform: translate3d(0, -100%, 0);
+  }
+
+  .shopcart .shopcart-list.fold-enter-active {
+    /*transform: translate3d(0,-100%,0);*/
+    /*transition: all .5s;*/
+  }
+
+  .shopcart .shopcart-list.fold-enter, .shopcart .shopcart-list.fold-leave-to {
+    transform: translate3d(0, 0, 0);
+  }
+
+  .shopcart .shopcart-list .list-header {
+    height: 40px;
+    line-height: 40px;
+    padding: 0 18px;
+    background: #f3f5f7;
+    border-bottom: 1px solid rgba(7, 17, 27, 0.1);
+  }
+
+  .shopcart .shopcart-list .list-header .title {
+    float: left;
+    font-size: 14px;
+    color: rgb(7, 17, 27);
+  }
+
+  .shopcart .shopcart-list .list-header .empty {
+    float: right;
+    font-size: 12px;
+    color: rgb(9, 169, 229);
+  }
+
+  .shopcart .shopcart-list .list-content {
+    padding: 0 18px;
+    max-height: 217px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .shopcart .shopcart-list .list-content .food {
+    position: relative;
+    padding: 12px 0;
+    box-sizing: border-box;
+  border-1px(rgba(7, 17, 27, 0.1));
+  }
+
+  .shopcart .shopcart-list .list-content .food .name {
+    line-height: 24px;
+    font-size: 14px;
+    color: rgb(7, 17, 27);
+  }
+
+  .shopcart .shopcart-list .list-content .food .price {
+    position: absolute;
+    right: 90px;
+    bottom: 12px;
+    line-height: 24px;
+    font-size: 14px;
+    font-weight: 700;
+    color: rgb(240, 20, 20);
+
+  }
+
+  .shopcart .shopcart-list .list-content .food .cartontrol-wrapper {
+    position: absolute;
+    right: 0;
+    bottom: 6px;
+  }
+
+  .list-mask {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 40;
+    width: 100%;
+    height: 100%;
+    transition: all 0.5s;
+    opacity: 1;
+    background: rgba(7, 17, 27, 0.6);
+    backdrop-filter: blur(10px);
+  }
+
+  .list-mask.fade-enter-active {
+    /*transform: translate3d(0,-100%,0);*/
+    /*transition: all .5s;*/
+  }
+
+  .list-mask.fade-enter, .list-mask.fade-leave-to {
+    opacity: 0;
+    background: rgba(7, 17, 27, 0);
+  }
 </style>

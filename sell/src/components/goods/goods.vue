@@ -1,46 +1,50 @@
 <template>
-  <div class="goods">
-    <div class="menu-wrapper" ref="menuWrapper">
-      <ul>
-        <li v-for="(item, index) in goods" class="menu-item" :class="{'current':currentIndex === index}
+  <div class="goods-wrapper">
+    <div class="goods">
+      <div class="menu-wrapper" ref="menuWrapper">
+        <ul>
+          <li v-for="(item, index) in goods" class="menu-item" :class="{'current':currentIndex === index}
         " @click="selectMenu(index, $event)">
           <span class="text border-1px">
             <span v-show="item.type>0" class="icon" :class="classMap[item.type]"></span>{{ item.name }}
           </span>
-        </li>
-      </ul>
+          </li>
+        </ul>
+      </div>
+      <div class="foods-wrapper" ref="foodsWrapper">
+        <ul>
+          <li v-for="item in goods " class="food-list food-list-hook">
+            <h1 class="title">{{ item.name }}</h1>
+            <ul>
+              <li @click="selectFood(food, $event)" v-for="food in item.foods" class="food-item">
+                <div class="icon">
+                  <img width="57px" height="57px" :src="food.icon" alt="">
+                </div>
+                <div class="content">
+                  <h2 class="name">{{ food.name }}</h2>
+                  <p class="desc"> {{ food.description}} </p>
+                  <div class="extra">
+                    <span class="count">月售{{food.sellCount}}份</span><span>好评率{{food.rating}}%</span>
+                  </div>
+                  <div class="price">
+                    <span class="now">${{food.price}}</span>
+                    <span v-show="food.oldPrice" class="old">${{food.oldPrice}}</span>
+                  </div>
+                  <div class="cartcontrol-wrapper">
+                    <cartcontrol v-on:cartAdd="cartAdd" :food="food"></cartcontrol>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <shopcart ref="shopcart" :select-foods="selectFoods" :delivery-price="seller.deliveryPrice"
+                :min-price="seller.minPrice"></shopcart>
     </div>
-    <div class="foods-wrapper" ref="foodsWrapper">
-      <ul>
-        <li v-for="item in goods " class="food-list food-list-hook">
-          <h1 class="title">{{ item.name }}</h1>
-          <ul>
-            <li v-for="food in item.foods" class="food-item">
-              <div class="icon">
-                <img width="57px" height="57px" :src="food.icon" alt="">
-              </div>
-              <div class="content">
-                <h2 class="name">{{ food.name }}</h2>
-                <p class="desc"> {{ food.description}} </p>
-                <div class="extra">
-                  <span class="count">月售{{food.sellCount}}份</span><span>好评率{{food.rating}}%</span>
-                </div>
-                <div class="price">
-                  <span class="now">${{food.price}}</span>
-                  <span v-show="food.oldPrice" class="old">${{food.oldPrice}}</span>
-                </div>
-                <div class="cartcontrol-wrapper">
-                  <cartcontrol v-on:cartAdd="cartAdd" :food="food"></cartcontrol>
-                </div>
-              </div>
-            </li>
-          </ul>
-        </li>
-      </ul>
-    </div>
-    <shopcart ref="shopcart" :select-foods="selectFoods" :delivery-price="seller.deliveryPrice"
-              :min-price="seller.minPrice"></shopcart>
+    <food :food="selectedFood" ref="food"></food>
   </div>
+
 
 </template>
 
@@ -51,6 +55,8 @@
   import shopcart from '../shopcart/shopcart.vue';
   // 增加删除商品的组件
   import cartcontrol from '../cartcontrol/cartcontrol.vue';
+  // 商品详情
+  import food from '../food/food.vue';
   const ERR_OK = 0;
   export default {
     name: 'goods',
@@ -60,7 +66,8 @@
         // 关联2个滚动条高度的数组(记录的是右侧的)
         listHeight: [],
         // 当前的y值
-        scrollY: 0
+        scrollY: 0,
+        selectedFood: {}
       };
     },
     props: {
@@ -120,7 +127,8 @@
     },
     components: {
       'shopcart': shopcart,
-      'cartcontrol': cartcontrol
+      'cartcontrol': cartcontrol,
+      'food': food
     },
     methods: {
       // 当添加一件购物车商品时触发,主要对应绑定在子组件上
@@ -142,6 +150,14 @@
         let el = foodList[index];
         // 第一个参数是滚动的Y点,第二个是动画执行的时间
         this.foodScroll.scrollToElement(el, 300);
+      },
+      // 选中商品
+      selectFood (food, event) {
+        if (!event._constructed) {
+          return;
+        }
+        this.selectedFood = food;
+        this.$refs.food.showFood();
       },
       // 初始化scroll
       _initScroll () {
