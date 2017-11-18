@@ -128,7 +128,7 @@
         while (count--) {
           let ball = this.balls[count];
           if (ball.show) {
-            // 获取点击元素的起始布局,并计算出位置,设置transform
+            // 获取点击元素的起始布局,并计算出位置,设置transform,这个必须是屏幕有组件的情况,不能消失状态
             let rect = ball.el.getBoundingClientRect();
             let x = rect.left - 32;
             let y = -(window.innerHeight - rect.top - 22);

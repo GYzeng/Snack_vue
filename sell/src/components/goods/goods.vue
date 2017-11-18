@@ -42,7 +42,7 @@
       <shopcart ref="shopcart" :select-foods="selectFoods" :delivery-price="seller.deliveryPrice"
                 :min-price="seller.minPrice"></shopcart>
     </div>
-    <food :food="selectedFood" ref="food"></food>
+    <food v-on:cartAdd="cartAdd" :food="selectedFood" ref="food"></food>
   </div>
 
 
