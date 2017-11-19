@@ -32,8 +32,24 @@
         <split></split>
         <div class="rating">
           <h1 class="title">商品评价</h1>
-          <ratingselect :selectType="selectType" :onlyContent="onlyContent" :desc="desc"
+          <ratingselect v-on:selected="selected" v-on:toogleContent="toogleContent"
+                        :selectType="selectType" :onlyContent="onlyContent" :desc="desc"
                         :ratings="food.ratings"></ratingselect>
+          <div class="rating-wrapper">
+            <ul v-show="food.ratings && food.ratings.length">
+              <li v-show="needShow(rating.rateType,rating.text)" v-for="rating in food.ratings" class="rating-item">
+                <div class="user">
+                  <span class="name">{{rating.username}}</span>
+                  <img class="avatar" width="12" height="12" :src="rating.avatar" alt="">
+                </div>
+                <div class="time">{{formatDate(rating.rateTime)}}</div>
+                <p class="text">
+                  <span :class="{'icon-thumb_up':rating.rateType === 0,'icon-thumb_down':rating.rateType===1}"></span>{{rating.text}}
+                </p>
+              </li>
+            </ul>
+            <div class="nor-rating" v-show="!food.ratings || !food.ratings.length">暂无评价</div>
+          </div>
         </div>
       </div>
     </div>
@@ -46,6 +62,7 @@
   import cartcontrol from '../cartcontrol/cartcontrol.vue';
   import split from '../split/split.vue';
   import ratingselect from '../ratingselect/ratingselect.vue';
+  import {formatDate} from '../../common/js/date.js';
   //  const POSITIVE = 0;
   //  const NEGATIVE = 1;
   const ALL = 2;
@@ -101,6 +118,32 @@
       },
       cartAdd (target) {
         this.$emit('cartAdd', target);
+      },
+      selected (selectType) {
+        this.selectType = selectType;
+        this.$nextTick(() => {
+          this.scroll.refresh();
+        });
+      },
+      toogleContent (onlyConten) {
+        this.onlyContent = onlyConten;
+        this.$nextTick(() => {
+          this.scroll.refresh();
+        });
+      },
+      needShow (rateType, text) {
+        if (this.onlyContent && !text) {
+          return false;
+        }
+        if (this.selectType === ALL) {
+          return true;
+        } else {
+          return rateType === this.selectType;
+        }
+      },
+      formatDate (time) {
+        let date = new Date(time);
+        return formatDate(date, 'yyyy-MM-dd hh:mm');
       }
     },
     components: {
@@ -112,6 +155,8 @@
 </script>
 
 <style lang="stylus" rel="stylesheet/stylus">
+  @import "../../common/stylus/mixin.styl";
+
   .food {
     position: fixed;
     left: 0;
@@ -272,5 +317,68 @@
     margin-left: 18px;
     font-size: 14px;
     color: rgb(7, 17, 27);
+  }
+
+  .food .food-content .rating .rating-wrapper {
+    padding: 0 18px;
+  }
+
+  .food .food-content .rating .rating-wrapper .rating-item {
+    position: relative;
+    padding: 16px 0;
+  border-1px(rgba(7, 17, 27, 0.1))
+  }
+
+  .food .food-content .rating .rating-wrapper .rating-item .user {
+    position: absolute;
+    right: 0;
+    top: 16px;
+    line-height: 12px;
+    font-size: 0;
+  }
+
+  .food .food-content .rating .rating-wrapper .rating-item .user .name {
+    display: inline-block;
+    vertical-align: top;
+    font-size: 10px;
+    color: rgb(147, 153, 159);
+  }
+
+  .food .food-content .rating .rating-wrapper .rating-item .time {
+    margin-bottom: 6px;
+    line-height: 12px;
+    font-size: 10px;
+    color: rgb(147,153,139);
+  }
+  .food .food-content .rating .rating-wrapper .rating-item .text {
+
+    line-height: 16px;
+    font-size: 12px;
+    color: rgb(7,17,27);
+  }
+
+  .food .food-content .rating .rating-wrapper .rating-item .text .icom-thumb_up, .food .food-content .rating .rating-wrapper .rating-item .text .icon-thumb_down{
+    margin-right: 4px;
+    line-height: 16px;
+    font-size: 12px;
+  }
+  .food .food-content .rating .rating-wrapper .rating-item .text .icom-thumb_up{
+    color: rgb(0,160,220);
+  }
+  .food .food-content .rating .rating-wrapper .rating-item .text .icon-thumb_down{
+    color: rgb(147,153,159);
+  }
+  .food .food-content .rating .rating-wrapper .nor-rating {
+    padding: 16px 0;
+    font-size: 12px;
+    color: rgb(147,153,159);
+  }
+  .food .food-content .rating .rating-wrapper {
+  }
+
+  .food .food-content .rating .rating-wrapper {
+  }
+
+  .food .food-content .rating .rating-wrapper {
   }
 </style>

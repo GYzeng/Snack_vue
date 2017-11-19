@@ -27,7 +27,6 @@
         return 'star-' + this.size;
       },
       intemClasses () {
-        console.log(this.score);
         let result = [];
         // * 2 向下取整 / 2 为了保证数字不是整数就是.5
         let score = Math.floor(this.score * 2) / 2;
@@ -83,7 +82,7 @@
   .star.star-36 .star-item{
     width: 15px;
     height: 15px;
-    margin-right: 16px;
+    margin-right: 6px;
     background-size: 15px 15px;
   }
   .star.star-36 .star-item:last-child{
@@ -101,7 +100,7 @@
   .star.star-24 .star-item{
     width: 10px;
     height: 10px;
-    margin-right: 16px;
+    margin-right: 4px;
     background-size: 10px 10px;
   }
   .star.star-24 .star-item:last-child{
